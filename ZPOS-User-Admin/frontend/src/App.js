@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import {Route, withRouter} from 'react-router-dom';
-import auth0Client from './Auth';
+import authClient from './Auth';
+import Login from './Login/Login';
+import Register from './Register/Register';
 import NavBar from './NavBar/NavBar';
 import Question from './Question/Question';
 import Questions from './Questions/Questions';
@@ -27,7 +29,7 @@ class App extends Component {
         return;
     }
         try {
-          await auth0Client.silentAuth();
+          await authClient.silentAuth();
           this.forceUpdate();
         } catch (err) {
           if (err.error === 'login_required') return;
@@ -41,7 +43,9 @@ class App extends Component {
     return (
       <div>
         <NavBar/>
-        <Route exact path='/' component={Questions}/>
+        <Route exact path='/' component={Login}/>
+        <Route exact path='/register' component={Register}/>
+        <Route exact path='/questions' component={Questions}/>
         <Route exact path='/question/:questionId' component={Question}/>
         <Route exact path='/callback' component={Callback}/>
         <SecuredRoute path='/new-question'

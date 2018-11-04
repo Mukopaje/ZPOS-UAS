@@ -5,8 +5,17 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 
-const jwt = require('express-jwt');
-const jwksRsa = require('jwks-rsa');
+const SuperLogin = require('superlogin');
+const superloginConfig = require('./../superlogin.config');
+
+const WindowsliveStrategy = require('passport-windowslive').Strategy;
+const FacebookStrategy = require('passport-facebook').Strategy;
+const GitHubStrategy = require('passport-github').Strategy;
+const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
+const LinkedinStrategy = require('passport-linkedin-oauth2').Strategy;
+
+// const jwt = require('express-jwt');
+// const jwksRsa = require('jwks-rsa');
 
 // define the Express app
 const app = express();
@@ -15,7 +24,7 @@ const app = express();
 const questions = [];
 
 // enhance your app security with Helmet
-app.use(helmet());
+// app.use(helmet());
 
 // use bodyParser to parse application/json content-type
 app.use(bodyParser.json());
@@ -25,6 +34,64 @@ app.use(cors());
 
 // log HTTP requests
 app.use(morgan('combined'));
+
+// load SuperLogin routes
+const superlogin = new SuperLogin(superloginConfig);
+if(superlogin.config.getItem('providers.windowslive.credentials.clientID'))
+  superlogin.registerOAuth2('windowslive', WindowsliveStrategy);
+if(superlogin.config.getItem('providers.facebook.credentials.clientID'))
+  superlogin.registerOAuth2('facebook', FacebookStrategy);
+if(superlogin.config.getItem('providers.github.credentials.clientID'))
+  superlogin.registerOAuth2('github', GitHubStrategy);
+if(superlogin.config.getItem('providers.google.credentials.clientID'))
+  superlogin.registerOAuth2('google', GoogleStrategy);
+if(superlogin.config.getItem('providers.linkedin.credentials.clientID'))
+  superlogin.registerOAuth2('linkedin', LinkedinStrategy);
+
+app.use('/auth', superlogin.router, (req, res) =>{
+  console.log('Request '+ req);
+  console.log('Response '+ res);
+});
+
+const Profile = require('./../profile');
+const profile = new Profile(superlogin);
+//var db;
+
+app.get('/user/profile', superlogin.requireAuth, (req, res, next) => {
+  profile.get(req.user._id)
+    .then((userProfile) =>{
+      res.status(200).json(userProfile);
+      console.log(JSON.stringify(userProfile));
+    }, (err) => {
+      return next(err);
+    });
+});
+
+app.post('/user/change-name', superlogin.requireAuth, (req, res, next) =>{
+  if(!req.body.newName) {
+    return next({
+      error: "Field 'newName' is required",
+      status: 400
+    });
+  }
+  profile.changeName(req.user._id, req.body.newName)
+    .then((userProfile) =>{
+      res.status(200).json(userProfile);
+    }, (err) =>{
+      return next(err);
+    });
+});
+
+app.post('/user/destroy', superlogin.requireAuth, (req, res, next) =>{
+  superlogin.removeUser(req.user._id, true)
+    .then(() => {
+      console.log('User destroyed!');
+      res.status(200).json({ok: true, success: 'User: ' + req.user._id + ' destroyed.'});
+    }, function(err) {
+      return next(err);
+    });
+});
+
 
 // retrieve all questions
 app.get('/', (req, res) => {
@@ -45,6 +112,7 @@ app.get('/:id', (req, res) => {
   res.send(question[0]);
 });
 
+/*
 const checkJwt = jwt({
     secret: jwksRsa.expressJwtSecret({
       cache: true,
@@ -58,9 +126,9 @@ const checkJwt = jwt({
     issuer: `https://digitalsystemsapi.auth0.com/`,
     algorithms: ['RS256']
   });
-
+*/
 // insert a new question
-app.post('/', checkJwt, (req, res) => {
+app.post('/question', (req, res) => {
     const {title, description} = req.body;
     const newQuestion = {
       id: questions.length + 1,
@@ -74,7 +142,7 @@ app.post('/', checkJwt, (req, res) => {
   });
   
   // insert a new answer to a question
-  app.post('/answer/:id', checkJwt, (req, res) => {
+  app.post('/answer/:id', (req, res) => {
     const {answer} = req.body;
   
     const question = questions.filter(q => (q.id === parseInt(req.params.id)));
@@ -89,7 +157,10 @@ app.post('/', checkJwt, (req, res) => {
     res.status(200).send();
   });
 
+  // Mount SuperLogin's routes to our app
+app.use('/auth', superlogin.router);
+
 // start the server
-app.listen(8081, () => {
-  console.log('listening on port 8081');
+app.listen(3030, () => {
+  console.log('listening on port 3030');
 });

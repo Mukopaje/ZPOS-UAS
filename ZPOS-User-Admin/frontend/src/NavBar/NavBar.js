@@ -8,14 +8,20 @@ function NavBar(props) {
     props.history.replace('/');
   };
 
+  const register = () =>{
+    props.history.replace('/register');
+  };
+
+  
+
   return (
     <nav className="navbar navbar-dark bg-primary fixed-top">
       <Link className="navbar-brand" to="/">
-        Q&App
+        ZPOS Admin
       </Link>
       {
         !auth0Client.isAuthenticated() &&
-        <button className="btn btn-dark" onClick={auth0Client.signIn}>Sign In</button>
+        <button className="btn btn-dark" onClick={() => {register()}} type="button">Register</button>
       }
       {
         auth0Client.isAuthenticated() &&
