@@ -9,7 +9,8 @@ function SecuredRoute(props) {
         if (checkingSession) 
         return <h3 className="text-center">Validating session...</h3>;
         if (!auth0Client.isAuthenticated()) {
-          auth0Client.signIn();
+          //auth0Client.signIn();
+          alert('You shaould sign in - securedRoutes')
           return <div></div>;
         }
         return <Component />

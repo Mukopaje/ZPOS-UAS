@@ -14,9 +14,6 @@ const GitHubStrategy = require('passport-github').Strategy;
 const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 const LinkedinStrategy = require('passport-linkedin-oauth2').Strategy;
 
-// const jwt = require('express-jwt');
-// const jwksRsa = require('jwks-rsa');
-
 // define the Express app
 const app = express();
 
@@ -25,6 +22,7 @@ const questions = [];
 
 // enhance your app security with Helmet
 // app.use(helmet());
+
 
 // use bodyParser to parse application/json content-type
 app.use(bodyParser.json());
@@ -49,7 +47,7 @@ if(superlogin.config.getItem('providers.linkedin.credentials.clientID'))
   superlogin.registerOAuth2('linkedin', LinkedinStrategy);
 
 app.use('/auth', superlogin.router, (req, res) =>{
-  console.log('Request '+ req);
+  console.log('Request '+ req.body);
   console.log('Response '+ res);
 });
 

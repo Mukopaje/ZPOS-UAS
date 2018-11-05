@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {withRouter} from 'react-router-dom';
-import authClient from '../Auth';
+import auth0Client from '../Auth';
 import axios from 'axios';
 
 class Login extends Component {
@@ -39,8 +39,6 @@ class Login extends Component {
         password: this.state.password
     }
 
-    const body = JSON.stringify(user);
-     alert(user);
     // console.log('User Details '+JSON.stringify(user));
     let headers = new Headers();
     headers.append('Content-Type', 'application/json');
@@ -51,7 +49,7 @@ class Login extends Component {
     }).then((response) => {
         console.log('Authenticated');
         // if login success then set session
-        authClient.setSession(response);
+        auth0Client.setSession(response.data);
       }).catch((error) => {
         console.log('Error on Authentication '+error);
         this.setState({

@@ -54,15 +54,24 @@ class Register extends Component {
       disabled: true,
     });
 
+    let  profile = {
+        fullname: this.state.name,
+        email: this.state.email,
+        image: '',
+        createdAt:  new Date()
+    }
+
     let user = {
         name: this.state.name,
         usrname: this.state.email,
         email: this.state.email,
         password: this.state.password,
-        confirmPassword: this.state.confirmPassword
+        confirmPassword: this.state.confirmPassword,
+        profile: profile
+
     }
 
-    alert(JSON.stringify(user));
+    
 
     let headers = new Headers();
     headers.append('Content-Type', 'application/json');

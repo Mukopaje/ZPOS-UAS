@@ -5,7 +5,7 @@ import auth0Client from '../Auth';
 function NavBar(props) {
   const signOut = () => {
     auth0Client.signOut();
-    props.history.replace('/');
+    props.history.replace('/questions');
   };
 
   const register = () =>{
@@ -16,7 +16,7 @@ function NavBar(props) {
 
   return (
     <nav className="navbar navbar-dark bg-primary fixed-top">
-      <Link className="navbar-brand" to="/">
+      <Link className="navbar-brand" to="/questions">
         ZPOS Admin
       </Link>
       {
@@ -26,7 +26,7 @@ function NavBar(props) {
       {
         auth0Client.isAuthenticated() &&
         <div>
-          <label className="mr-2 text-white">{auth0Client.getProfile().name}</label>
+          <label className="mr-2 text-white">{auth0Client.getProfile().fullname}</label>
           <button className="btn btn-dark" onClick={() => {signOut()}}>Sign Out</button>
         </div>
       }

@@ -1,7 +1,8 @@
-import auth0 from 'auth0-js';
+import axios from 'axios';
 
 class Auth {
   constructor() {
+    /*
     this.auth0 = new auth0.WebAuth({
       // the following three lines MUST be updated
       domain: 'digitalsystemsapi.auth0.com',
@@ -11,7 +12,7 @@ class Auth {
       responseType: 'token id_token',
       scope: 'openid profile'
     });
-
+*/
     this.getProfile = this.getProfile.bind(this);
     this.handleAuthentication = this.handleAuthentication.bind(this);
     this.isAuthenticated = this.isAuthenticated.bind(this);
@@ -23,11 +24,19 @@ class Auth {
     return this.profile;
   }
 
+ 
+
   getIdToken() {
     return this.idToken;
   }
 
+  //we share the remote db here
+  getRemote() {
+    return this.remote;
+  }
+
   isAuthenticated() {
+    // alert('Expires - '+this.expiresAt);
     return new Date().getTime() < this.expiresAt;
   }
 
@@ -35,37 +44,49 @@ class Auth {
     this.auth0.authorize();
   }
 
-  
-  handleAuthentication() {
-    return new Promise((resolve, reject) => {
-      this.auth0.parseHash((err, authResult) => {
-        if (err) return reject(err);
-        if (!authResult || !authResult.idToken) {
-          return reject(err);
+    
+  async handleAuthentication() {
+    
+      let headers = new Headers(), response;
+    headers.append('Content-Type', 'application/json');
+    headers.append('Authorization', this.idToken + ':' + this.password);
+    try {
+    response = await axios.get('http://localhost:3030/auth/session', {
+        
+      headers: headers 
+    });
+        alert('Session '+response);
+        this.setSession(response.data);
+       return;
+      } catch (error)  {
+        console.log('Error on Registering '+error);
+        if (error) return error;
+        if (!response.data || !response.data.token) {
+          return error;
         }
-        this.setSession(authResult);
-        resolve();
-      });
-    })
+    
   }
+}
 
   setSession(authResult, step) {
-    this.idToken = authResult.idToken;
-    this.profile = authResult.idTokenPayload;
+    this.idToken = authResult.token;
+    this.password = authResult.password;
+    this.profile = authResult.profile;
+    this.remote = authResult.userDBs.zpos;
     // set the time that the id token will expire at
-    this.expiresAt = authResult.expiresIn * 1000 + new Date().getTime();
+    this.expiresAt = authResult.expires * 1000 + new Date().getTime();
   }
 
   signOut() {
-    this.auth0.logout({
-      returnTo: 'http://localhost:3000',
-      clientID: 'O0PBMHZYXipRXlSatxw6rre6AaNQ2Sne',
-    });
+    this.idToken = null;
+    this.password = null;
+    this.profile = null;
+    this.expiresAt = null;
   }
 
   silentAuth() {
     return new Promise((resolve, reject) => {
-      this.auth0.checkSession({}, (err, authResult) => {
+      this.handleAuthentication({}, (err, authResult) => {
         if (err) return reject(err);
         this.setSession(authResult);
         resolve();
@@ -75,6 +96,6 @@ class Auth {
 }
 
 
-const auth0Client = new Auth();
+ const auth0Client = new Auth();
 
 export default auth0Client;

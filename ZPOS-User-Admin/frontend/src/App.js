@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {Route, withRouter} from 'react-router-dom';
-import authClient from './Auth';
+import auth0Client from './Auth';
 import Login from './Login/Login';
 import Register from './Register/Register';
 import NavBar from './NavBar/NavBar';
@@ -10,12 +10,18 @@ import NewQuestion from './NewQuestion/NewQuestion';
 import SecuredRoute from './SecuredRoutes/SecuredRoutes';
 import Callback from './Callback';
 
-
+//import pouchdb
+import PouchDB from 'pouchdb';
 
 
 class App extends Component {
 
     constructor(props) {
+
+      //we dont want to change state with this
+     if(auth0Client.isAuthenticated()) 
+      this.remoteDB = auth0Client.getRemote(); 
+
         super(props);
         this.state = {
           checkingSession: true,
@@ -29,7 +35,7 @@ class App extends Component {
         return;
     }
         try {
-          await authClient.silentAuth();
+          await auth0Client.silentAuth();
           this.forceUpdate();
         } catch (err) {
           if (err.error === 'login_required') return;
@@ -37,7 +43,25 @@ class App extends Component {
         }
 
         this.setState({checkingSession:false});
+
+        if (this.remoteDB) {
+          this.syncToRemote();
+        }
       }
+
+      /**
+   * Synchronize local PouchDB with a remote CouchDB or Cloudant
+   */
+  syncToRemote = () => {
+    this.props.localDB.sync(this.remoteDB, {live: true, retry: true})
+    .on('change', change => {
+      this.getPouchDocs();
+    })
+    // .on('paused', info => console.log('replication paused.'))
+    // .on('active', info => console.log('replication resumed.'))
+    .on('error', err => console.log('uh oh! an error occured while synching.'));
+}
+
 
   render() {
     return (
